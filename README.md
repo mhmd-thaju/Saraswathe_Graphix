@@ -12,8 +12,10 @@
 | 🧑‍🤝‍🧑 **CRM** | Customer profiles, mobile-number search, order history |
 | 🧾 **Orders / POS** | Line items, CGST/SGST/IGST calculation, PDF invoice download |
 | 📋 **Kanban Board** | Drag-and-drop job tracking across New → Designing → Printing → Ready |
+| 📈 **Dashboard** | Visual revenue trends (Last 7 days) and job pipeline analytics |
 | 📲 **Notifications** | Pre-filled WhatsApp & Email links, notification history log |
 | ☁️ **Cloud Backup** | Daily auto-sync to Supabase (configurable), manual trigger |
+| 🔒 **Security** | Password-protected system access (Default: `admin123`) |
 | ⚙️ **Settings** | Shop GSTIN, address, default GST rate, backup config |
 
 ---
@@ -127,6 +129,17 @@ Thank you for your business! 🙏
 ```
 
 All sends are logged to the `notification_log` table.
+
+---
+
+
+## 🖥️ Standalone Desktop Mode
+
+PrintFlow can be run as a standalone desktop application with a dedicated icon and no browser interface:
+
+1.  **Launch**: Run `PrintFlow.vbs` to start the system silently in the background.
+2.  **App Window**: A dedicated, isolated window (Edge/Chrome App Mode) will open automatically.
+3.  **Setup**: See **[DESKTOP_SETUP.md](DESKTOP_SETUP.md)** to create a desktop shortcut with the premium app icon.
 
 ---
 

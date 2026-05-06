@@ -7,6 +7,11 @@ import {
 import { ordersApi, customersApi } from '@/lib/api'
 import { formatCurrency } from '@/lib/gst'
 import type { KanbanCard, Customer } from '@/types'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Cell
+} from 'recharts'
+import { startOfDay, format, subDays, isSameDay } from 'date-fns'
 
 const STATUS_COLOR: Record<string, string> = {
   new:       'bg-info/15 text-info',
@@ -46,6 +51,19 @@ export default function Dashboard() {
   const recentOrders   = [...orders].sort((a, b) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   ).slice(0, 5)
+
+  // Chart Data: Last 7 Days Revenue
+  const chartData = Array.from({ length: 7 }).map((_, i) => {
+    const date = subDays(new Date(), 6 - i)
+    const dayTotal = orders
+      .filter(o => isSameDay(new Date(o.created_at), date))
+      .reduce((sum, o) => sum + o.total_amount, 0)
+    return {
+      name: format(date, 'EEE'),
+      total: dayTotal,
+      rawDate: date
+    }
+  })
 
   const stats = [
     { label: 'Total Customers', value: customers.length, icon: Users,        color: 'text-brand-400', bg: 'bg-brand-600/10' },
@@ -89,26 +107,68 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Kanban Status Overview */}
-      <div className="glass-card p-5 mb-6">
-        <h2 className="text-lg font-outfit font-700 text-text-primary mb-4">Job Pipeline</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {([
-            { label: 'New Orders',   count: counts.new,       color: 'border-info',    bg: 'bg-info/10',          tc: 'text-info' },
-            { label: 'Designing',    count: counts.designing, color: 'border-brand-500', bg: 'bg-brand-600/10',   tc: 'text-brand-400' },
-            { label: 'Printing',     count: counts.printing,  color: 'border-warning', bg: 'bg-warning/10',       tc: 'text-warning' },
-            { label: 'Ready Pickup', count: counts.ready,     color: 'border-success', bg: 'bg-success/10',       tc: 'text-success' },
-          ] as const).map(col => (
-            <div key={col.label} className={`rounded-xl border-2 ${col.color} ${col.bg} p-4 text-center`}>
-              <p className={`text-3xl font-outfit font-800 ${col.tc}`}>{col.count}</p>
-              <p className="text-text-muted text-sm mt-1">{col.label}</p>
-            </div>
-          ))}
+
+      <div className="grid lg:grid-cols-3 gap-6 mb-6">
+        {/* Kanban Status Overview */}
+        <div className="glass-card p-5 lg:col-span-1">
+          <h2 className="text-lg font-outfit font-700 text-text-primary mb-4">Job Pipeline</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              { label: 'New',      count: counts.new,       color: 'border-info',    bg: 'bg-info/10',          tc: 'text-info' },
+              { label: 'Design',   count: counts.designing, color: 'border-brand-500', bg: 'bg-brand-600/10',   tc: 'text-brand-400' },
+              { label: 'Print',    count: counts.printing,  color: 'border-warning', bg: 'bg-warning/10',       tc: 'text-warning' },
+              { label: 'Ready',    count: counts.ready,     color: 'border-success', bg: 'bg-success/10',       tc: 'text-success' },
+            ] as const).map(col => (
+              <div key={col.label} className={`rounded-xl border-2 ${col.color} ${col.bg} p-3 text-center`}>
+                <p className={`text-2xl font-outfit font-800 ${col.tc}`}>{col.count}</p>
+                <p className="text-text-muted text-xs mt-0.5">{col.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end mt-4">
+            <Link to="/kanban" className="text-brand-400 text-sm flex items-center gap-1 hover:gap-2 transition-all">
+              Open Board <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
-        <div className="flex justify-end mt-3">
-          <Link to="/kanban" className="text-brand-400 text-sm flex items-center gap-1 hover:gap-2 transition-all">
-            Open Job Board <ArrowRight size={14} />
-          </Link>
+
+        {/* Revenue Chart */}
+        <div className="glass-card p-5 lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-outfit font-700 text-text-primary">Revenue Trends</h2>
+            <p className="text-xs text-text-muted italic">Last 7 Days (Excl. GST)</p>
+          </div>
+          <div className="h-[180px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 11 }} 
+                  dy={10}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                  contentStyle={{ 
+                    backgroundColor: '#1e1e2d', 
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    color: '#f8fafc'
+                  }}
+                  itemStyle={{ color: '#7c3aed' }}
+                  formatter={(val: number) => [`₹${val.toLocaleString('en-IN')}`, 'Revenue']}
+                />
+                <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={32}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.total > 0 ? '#7c3aed' : '#334155'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 

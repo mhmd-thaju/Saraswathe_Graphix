@@ -61,12 +61,20 @@ export default function Settings() {
     </div>
   )
 
+  const handleLogout = () => {
+    localStorage.removeItem('pf_auth')
+    window.location.reload()
+  }
+
   return (
     <div className="animate-fade-in max-w-2xl">
       <div className="page-header">
         <h1 className="page-title flex items-center gap-2">
           <SettingsIcon size={26} className="text-brand-400" />Settings
         </h1>
+        <button onClick={handleLogout} className="btn-secondary text-danger border-danger/20 hover:bg-danger/10">
+          Logout & Lock
+        </button>
       </div>
 
       {/* Shop Info */}
