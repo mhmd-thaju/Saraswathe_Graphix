@@ -112,6 +112,7 @@ class OrderStatusUpdate(BaseModel):
 class OrderSummary(BaseModel):
     id:           str
     order_number: int
+    customer_name: str
     status:       str
     priority:     str
     total_amount: float

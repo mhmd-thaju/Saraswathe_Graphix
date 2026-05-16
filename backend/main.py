@@ -2,10 +2,17 @@
 PrintFlow ERP — FastAPI Application Entry Point
 """
 import os
+import sys
 import logging
+import webbrowser
+import threading
+import time
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -25,9 +32,32 @@ logger = logging.getLogger("printflow")
 
 BACKUP_HOUR   = int(os.getenv("BACKUP_CRON_HOUR",   "2"))
 BACKUP_MINUTE = int(os.getenv("BACKUP_CRON_MINUTE", "0"))
-FRONTEND_URL  = os.getenv("FRONTEND_URL", "http://localhost:5173")
+FRONTEND_URL  = os.getenv("FRONTEND_URL", "http://localhost:8000")
+
+# Path handling for PyInstaller
+if getattr(sys, 'frozen', False):
+    # Running in a bundle
+    BASE_DIR = Path(sys._MEIPASS)
+else:
+    # Running in normal python environment
+    BASE_DIR = Path(__file__).resolve().parent.parent
+
+STATIC_DIR = BASE_DIR / "frontend" / "dist"
 
 scheduler = BackgroundScheduler()
+
+def open_browser():
+    """Wait for server and open browser in app mode."""
+    time.sleep(1.5)
+    url = "http://127.0.0.1:8000"
+    # Try Edge App Mode, then Chrome App Mode, then fallback
+    try:
+        os.system(f'start msedge --app="{url}"')
+    except:
+        try:
+            os.system(f'start chrome --app="{url}"')
+        except:
+            webbrowser.open(url)
 
 
 @asynccontextmanager
@@ -48,6 +78,11 @@ async def lifespan(app: FastAPI):
         replace_existing=True,
     )
     scheduler.start()
+    
+    # Auto-launch browser if not in reload mode
+    if not os.getenv("RUNNING_AS_RELOADER"):
+        threading.Thread(target=open_browser, daemon=True).start()
+        
     logger.info("PrintFlow backend started ✅")
     yield
 
@@ -66,17 +101,17 @@ app = FastAPI(
 # CORS — allow frontend origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ── Routers ───────────────────────────────────────────────────
-app.include_router(customers.router)
-app.include_router(orders.router)
-app.include_router(notifications.router)
-app.include_router(settings_router.router)
+# ── API Routers ────────────────────────────────────────────────
+app.include_router(customers.router,     prefix="/api")
+app.include_router(orders.router,        prefix="/api")
+app.include_router(notifications.router, prefix="/api")
+app.include_router(settings_router.router, prefix="/api")
 
 
 # ── Backup Endpoints ──────────────────────────────────────────
@@ -101,6 +136,26 @@ def backup_status():
 @app.get("/health", tags=["System"])
 def health():
     return {"status": "ok", "app": "PrintFlow ERP", "version": "1.0.0"}
+
+
+# ── Frontend Serving ──────────────────────────────────────────
+if STATIC_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        # API routes are already handled above. 
+        # If it's not an API route, serve index.html for SPA support.
+        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi.json"):
+            return None # Should be handled by routers
+        
+        file_path = STATIC_DIR / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        
+        return FileResponse(STATIC_DIR / "index.html")
+else:
+    logger.warning(f"Static directory not found at {STATIC_DIR}. Frontend will not be served.")
 
 
 # ── Helpers ───────────────────────────────────────────────────
@@ -137,5 +192,5 @@ if __name__ == "__main__":
         "main:app",
         host=os.getenv("APP_HOST", "127.0.0.1"),
         port=int(os.getenv("APP_PORT", "8000")),
-        reload=True,
+        reload=not getattr(sys, 'frozen', False),
     )

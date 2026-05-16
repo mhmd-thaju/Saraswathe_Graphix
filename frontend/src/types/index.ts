@@ -60,6 +60,7 @@ export interface Order {
 export interface OrderSummary {
   id: string
   order_number: number
+  customer_name: string
   status: OrderStatus
   priority: Priority
   total_amount: number

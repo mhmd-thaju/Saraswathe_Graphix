@@ -88,7 +88,7 @@ export default function CRM() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
           {[...Array(6)].map((_,i) => <div key={i} className="h-36 bg-bg-elevated rounded-2xl"/>)}
         </div>
       ) : customers.length === 0 ? (
@@ -98,8 +98,8 @@ export default function CRM() {
           <button onClick={openAdd} className="btn-primary mt-4"><Plus size={16}/>Add Customer</button>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {customers.map(c => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.isArray(customers) && customers.map(c => (
             <div key={c.id} className="glass-card p-4 cursor-pointer" onClick={() => openDetail(c.id)}>
               <div className="flex items-start justify-between mb-3">
                 <div className="w-11 h-11 rounded-xl bg-brand-600/15 flex items-center justify-center font-outfit font-800 text-brand-400 text-lg">
@@ -138,9 +138,9 @@ export default function CRM() {
                 <h3 className="font-outfit font-700">Orders ({detail.orders.length})</h3>
                 <Link to={`/orders/new?customer=${detail.id}`} className="btn-primary text-sm py-2 px-3"><Plus size={14}/>New Order</Link>
               </div>
-              {detail.orders.length === 0
+              {Array.isArray(detail.orders) && detail.orders.length === 0
                 ? <p className="text-text-muted text-sm text-center py-3">No orders yet</p>
-                : detail.orders.map(o => (
+                : Array.isArray(detail.orders) && detail.orders.map(o => (
                   <Link key={o.id} to={`/orders/${o.id}`}
                     className="flex items-center justify-between p-3 bg-bg-elevated rounded-xl hover:bg-bg-border transition-all">
                     <span className="text-sm font-medium">#{o.order_number}</span>

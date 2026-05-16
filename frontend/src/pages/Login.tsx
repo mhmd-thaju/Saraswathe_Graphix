@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Lock, Printer } from 'lucide-react'
+import { Lock, Printer, Sun, Moon } from 'lucide-react'
+import { useTheme } from '@/lib/ThemeContext'
 
 interface Props {
   onLogin: (pass: string) => boolean
@@ -8,6 +9,7 @@ interface Props {
 export default function LoginPage({ onLogin }: Props) {
   const [pass, setPass] = useState('')
   const [error, setError] = useState(false)
+  const { theme, toggleTheme } = useTheme()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,7 +22,16 @@ export default function LoginPage({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-bg-main flex items-center justify-center p-4">
+    <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-4">
+      <div className="absolute top-6 right-6">
+        <button
+          onClick={toggleTheme}
+          className="p-3 rounded-xl bg-bg-surface border border-bg-border text-text-muted hover:text-text-primary transition-all shadow-glow-sm"
+        >
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+      </div>
+
       <div className="glass-card p-8 w-full max-w-md animate-slide-up">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-brand-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4">

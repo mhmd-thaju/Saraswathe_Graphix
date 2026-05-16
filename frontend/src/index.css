@@ -7,6 +7,44 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Dark Mode (Default) */
+  --bg-base:     #0F1117;
+  --bg-surface:  #1A1D27;
+  --bg-elevated: #1E2330;
+  --bg-border:   #2A2D3E;
+  
+  --text-primary: #F0F0F5;
+  --text-muted:   #8892A4;
+  --text-faint:   #4B5563;
+
+  --brand-50:  #EDE9FE;
+  --brand-100: #DDD6FE;
+  --brand-400: #A78BFA;
+  --brand-500: #8B5CF6;
+  --brand-600: #7C3AED;
+  --brand-700: #6D28D9;
+
+  --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+.light {
+  --bg-base:     #F9FAFB;
+  --bg-surface:  #FFFFFF;
+  --bg-elevated: #F3F4F6;
+  --bg-border:   #E5E7EB;
+  
+  --text-primary: #111827;
+  --text-muted:   #4B5563;
+  --text-faint:   #9CA3AF;
+
+  --brand-400: #7C3AED;
+  --brand-500: #6D28D9;
+  --brand-600: #5B21B6;
+  
+  --shadow-color: rgba(0, 0, 0, 0.05);
+}
+
 /* ── Base Reset ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -16,13 +54,14 @@ html {
 }
 
 body {
-  background-color: #0F1117;
-  color: #F0F0F5;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -33,12 +72,12 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Scrollbar ────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #1A1D27; }
-::-webkit-scrollbar-thumb { background: #2A2D3E; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #7C3AED; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--brand-600); }
 
 /* ── Selection ───────────────────────────────────────────── */
-::selection { background: rgba(124, 58, 237, 0.3); color: #F0F0F5; }
+::selection { background: rgba(124, 58, 237, 0.3); color: var(--text-primary); }
 
 /* ── Component Layer ─────────────────────────────────────── */
 @layer components {
@@ -118,12 +157,14 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   /* Page Header */
-  .page-header {
-    @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6;
+  .page-content {
+    @apply p-4 md:p-8 max-w-[1600px] mx-auto;
   }
-
+  .page-header {
+    @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8;
+  }
   .page-title {
-    @apply text-2xl md:text-3xl font-outfit font-700 text-text-primary;
+    @apply text-2xl md:text-3xl font-outfit font-800 text-text-primary tracking-tight;
   }
 
   /* Status Badge Base */
@@ -153,7 +194,8 @@ h1, h2, h3, h4, h5, h6 {
     @apply px-4 py-4 text-sm text-text-primary border-b border-bg-border;
   }
   .data-table tr:hover td {
-    @apply bg-bg-elevated/50;
+    @apply bg-bg-elevated;
+    background-color: color-mix(in srgb, var(--bg-elevated), transparent 50%);
   }
 
   /* Stat Card */
@@ -170,8 +212,10 @@ h1, h2, h3, h4, h5, h6 {
   /* Kanban Card */
   .kanban-card {
     @apply bg-bg-elevated border border-bg-border rounded-xl p-4 cursor-grab
-           hover:border-brand-600/50 hover:shadow-glow-sm
-           transition-all duration-200 animate-fade-in;
+           hover:shadow-glow-sm transition-all duration-200 animate-fade-in;
+    &:hover {
+      border-color: color-mix(in srgb, var(--brand-600), transparent 50%);
+    }
   }
   .kanban-card:active { cursor: grabbing; }
 }
@@ -231,7 +275,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Drag over indicator ──────────────────────────────────── */
 .drag-over {
-  @apply border-brand-500 bg-brand-600/5;
+  @apply border-brand-500;
+  background-color: color-mix(in srgb, var(--brand-600), transparent 95%);
 }
 
 /* ── Modal overlay ────────────────────────────────────────── */

@@ -33,15 +33,17 @@ export default function Kanban() {
   const load = useCallback(() => {
     setLoading(true)
     Promise.all([ordersApi.kanban(), settingsApi.getAll()]).then(([c, settings]) => {
-      setCards(c)
-      const s = settings.find(x => x.key === 'shop_name')
-      if (s) setShopName(s.value)
+      setCards(Array.isArray(c) ? c : [])
+      if (Array.isArray(settings)) {
+        const s = settings.find(x => x.key === 'shop_name')
+        if (s) setShopName(s.value)
+      }
     }).finally(() => setLoading(false))
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  const colCards = (col: OrderStatus) => cards.filter(c => c.status === col)
+  const colCards = (col: OrderStatus) => (Array.isArray(cards) ? cards : []).filter(c => c.status === col)
 
   function onDragStart(e: DragStartEvent) {
     setActive(cards.find(c => c.id === e.active.id) ?? null)
@@ -139,7 +141,7 @@ function KanbanColumn({ col, cards, onNotify }: { col: any; cards: KanbanCard[];
           {cards.length}
         </span>
       </div>
-      <SortableContext items={cards.map(c => c.id as string)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={(Array.isArray(cards) ? cards : []).map(c => c.id as string)} strategy={verticalListSortingStrategy}>
         <div className="space-y-3">
           {cards.length === 0 && (
             <div className="text-center py-12 text-text-faint text-sm border-2 border-dashed border-bg-border/50 rounded-2xl">

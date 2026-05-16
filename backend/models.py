@@ -58,6 +58,10 @@ class Order(Base):
     line_items = relationship("LineItem", back_populates="order", cascade="all, delete-orphan")
     notifications = relationship("NotificationLog", back_populates="order", cascade="all, delete-orphan")
 
+    @property
+    def customer_name(self) -> str:
+        return self.customer.name if self.customer else "Unknown"
+
 
 class LineItem(Base):
     __tablename__ = "line_items"

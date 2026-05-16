@@ -3,13 +3,23 @@ PrintFlow ERP — Database Configuration
 SQLAlchemy engine + session factory for SQLite
 """
 import os
+import sys
+from pathlib import Path
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "./printflow.db")
+# Determine base path for the database file
+if getattr(sys, 'frozen', False):
+    # If running as an EXE, put DB in the same folder as the EXE
+    EXE_DIR = Path(sys.executable).parent
+    SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", str(EXE_DIR / "printflow.db"))
+else:
+    # Normal dev mode
+    SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "./printflow.db")
+
 DATABASE_URL = f"sqlite:///{SQLITE_DB_PATH}"
 
 engine = create_engine(

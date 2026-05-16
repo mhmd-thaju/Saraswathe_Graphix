@@ -38,24 +38,27 @@ export default function Dashboard() {
       .finally(() => setLoading(false))
   }, [])
 
+  const ordersArray = Array.isArray(orders) ? orders : []
+  const customersArray = Array.isArray(customers) ? customers : []
+
   const counts = {
-    new:       orders.filter(o => o.status === 'new').length,
-    designing: orders.filter(o => o.status === 'designing').length,
-    printing:  orders.filter(o => o.status === 'printing').length,
-    ready:     orders.filter(o => o.status === 'ready').length,
+    new:       ordersArray.filter(o => o.status === 'new').length,
+    designing: ordersArray.filter(o => o.status === 'designing').length,
+    printing:  ordersArray.filter(o => o.status === 'printing').length,
+    ready:     ordersArray.filter(o => o.status === 'ready').length,
   }
 
-  const totalRevenue   = orders.reduce((s, o) => s + o.total_amount, 0)
-  const activeJobs     = orders.filter(o => o.status !== 'ready').length
-  const urgentOrders   = orders.filter(o => o.priority === 'urgent' || o.priority === 'high')
-  const recentOrders   = [...orders].sort((a, b) =>
+  const totalRevenue   = ordersArray.reduce((s, o) => s + o.total_amount, 0)
+  const activeJobs     = ordersArray.filter(o => o.status !== 'ready').length
+  const urgentOrders   = ordersArray.filter(o => o.priority === 'urgent' || o.priority === 'high')
+  const recentOrders   = [...ordersArray].sort((a, b) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   ).slice(0, 5)
 
   // Chart Data: Last 7 Days Revenue
   const chartData = Array.from({ length: 7 }).map((_, i) => {
     const date = subDays(new Date(), 6 - i)
-    const dayTotal = orders
+    const dayTotal = ordersArray
       .filter(o => isSameDay(new Date(o.created_at), date))
       .reduce((sum, o) => sum + o.total_amount, 0)
     return {
@@ -66,7 +69,7 @@ export default function Dashboard() {
   })
 
   const stats = [
-    { label: 'Total Customers', value: customers.length, icon: Users,        color: 'text-brand-400', bg: 'bg-brand-600/10' },
+    { label: 'Total Customers', value: customersArray.length, icon: Users,        color: 'text-brand-400', bg: 'bg-brand-600/10' },
     { label: 'Active Jobs',     value: activeJobs,        icon: Clock,        color: 'text-warning',   bg: 'bg-warning/10' },
     { label: 'Ready Pickup',    value: counts.ready,      icon: CheckCircle2, color: 'text-success',   bg: 'bg-success/10' },
     { label: 'Total Revenue',   value: formatCurrency(totalRevenue), icon: TrendingUp, color: 'text-warm-400', bg: 'bg-warm-500/10', isText: true },
@@ -77,7 +80,7 @@ export default function Dashboard() {
   return (
     <div className="animate-fade-in">
       {/* Header */}
-      <div className="page-header">
+      <div className="page-header items-start sm:items-center">
         <div>
           <h1 className="page-title flex items-center gap-2">
             <Printer className="text-brand-400" size={28} />
@@ -85,7 +88,7 @@ export default function Dashboard() {
           </h1>
           <p className="text-text-muted mt-1">Welcome back — here's what's happening today.</p>
         </div>
-        <Link to="/orders/new" className="btn-primary">
+        <Link to="/orders/new" className="btn-primary w-full sm:w-auto">
           <Plus size={18} /> New Order
         </Link>
       </div>
@@ -108,11 +111,11 @@ export default function Dashboard() {
       </div>
 
 
-      <div className="grid lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Kanban Status Overview */}
         <div className="glass-card p-5 lg:col-span-1">
           <h2 className="text-lg font-outfit font-700 text-text-primary mb-4">Job Pipeline</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3">
             {([
               { label: 'New',      count: counts.new,       color: 'border-info',    bg: 'bg-info/10',          tc: 'text-info' },
               { label: 'Design',   count: counts.designing, color: 'border-brand-500', bg: 'bg-brand-600/10',   tc: 'text-brand-400' },
@@ -159,7 +162,7 @@ export default function Dashboard() {
                     color: '#f8fafc'
                   }}
                   itemStyle={{ color: '#7c3aed' }}
-                  formatter={(val: number) => [`₹${val.toLocaleString('en-IN')}`, 'Revenue']}
+                  formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN')}`, 'Revenue']}
                 />
                 <Bar dataKey="total" radius={[6, 6, 0, 0]} barSize={32}>
                   {chartData.map((entry, index) => (

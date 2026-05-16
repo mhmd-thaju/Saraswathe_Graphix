@@ -102,7 +102,7 @@ export default function Orders() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map(o => (
+                {Array.isArray(orders) && orders.map(o => (
                   <tr key={o.id} onClick={() => navigate(`/orders/${o.id}`)}
                     className="cursor-pointer hover:bg-bg-elevated/50 transition-colors">
                     <td className="font-outfit font-700 text-brand-400">#{o.order_number}</td>

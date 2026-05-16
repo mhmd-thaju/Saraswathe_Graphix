@@ -36,10 +36,12 @@ export default function OrderDetail() {
       notificationsApi.getByOrder(id),
     ]).then(([o, settings, notifs]) => {
       setOrder(o)
-      setLogs(notifs)
+      setLogs(Array.isArray(notifs) ? notifs : [])
       const m: Record<string,string> = {}
-      settings.forEach(s => { m[s.key] = s.value })
-      setShop(m as ShopSettings)
+      if (Array.isArray(settings)) {
+        settings.forEach(s => { m[s.key] = s.value })
+      }
+      setShop(m as unknown as ShopSettings)
     }).finally(() => setLoading(false))
   }, [id])
 
@@ -126,7 +128,7 @@ export default function OrderDetail() {
       {/* Status Stepper */}
       <div className="glass-card p-5 mb-5">
         <h2 className="font-outfit font-700 mb-4">Update Status</h2>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {STATUS_STEPS.map((s,i) => {
             const active  = order.status === s
             const done    = STATUS_STEPS.indexOf(order.status) > i
@@ -176,7 +178,7 @@ export default function OrderDetail() {
               </tr>
             </thead>
             <tbody>
-              {order.line_items.map(li => {
+              {Array.isArray(order.line_items) && order.line_items.map(li => {
                 const gstAmt = (li.amount * li.gst_rate) / 100
                 return (
                   <tr key={li.id}>
@@ -222,15 +224,15 @@ export default function OrderDetail() {
       {/* Actions */}
       <div className="glass-card p-5 mb-5">
         <h2 className="font-outfit font-700 mb-4">Actions</h2>
-        <div className="flex flex-wrap gap-3">
-          <button onClick={downloadPDF} className="btn-secondary"><Download size={18}/>Download Invoice</button>
-          <button onClick={() => notifyWhatsApp('ready')} className="btn-whatsapp"><MessageSquare size={18}/>WhatsApp (Ready)</button>
-          <button onClick={() => notifyWhatsApp('status')} className="btn-secondary"><MessageSquare size={18}/>WhatsApp (Status)</button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3">
+          <button onClick={downloadPDF} className="btn-secondary w-full lg:w-auto"><Download size={18}/>Download Invoice</button>
+          <button onClick={() => notifyWhatsApp('ready')} className="btn-whatsapp w-full lg:w-auto"><MessageSquare size={18}/>WhatsApp (Ready)</button>
+          <button onClick={() => notifyWhatsApp('status')} className="btn-secondary w-full lg:w-auto"><MessageSquare size={18}/>WhatsApp (Status)</button>
           {order.customer.email && (
-            <button onClick={notifyEmail} className="btn-secondary"><Mail size={18}/>Send Email</button>
+            <button onClick={notifyEmail} className="btn-secondary w-full lg:w-auto"><Mail size={18}/>Send Email</button>
           )}
-          <Link to={`/orders/new?edit=${order.id}`} className="btn-secondary"><Edit3 size={18}/>Edit Order</Link>
-          <button onClick={handleDelete} className="btn-danger ml-auto"><Trash2 size={18}/>Delete Order</button>
+          <Link to={`/orders/new?edit=${order.id}`} className="btn-secondary w-full lg:w-auto"><Edit3 size={18}/>Edit Order</Link>
+          <button onClick={handleDelete} className="btn-danger w-full lg:w-auto lg:ml-auto"><Trash2 size={18}/>Delete Order</button>
         </div>
       </div>
 
@@ -239,7 +241,7 @@ export default function OrderDetail() {
         <div className="glass-card p-5">
           <h2 className="font-outfit font-700 mb-3">Notification Log</h2>
           <div className="space-y-2">
-            {logs.map(l => (
+            {Array.isArray(logs) && logs.map(l => (
               <div key={l.id} className="flex items-start gap-3 p-3 bg-bg-elevated rounded-xl">
                 <span className={`badge mt-0.5 ${l.channel==='whatsapp' ? 'bg-[#25D366]/15 text-[#25D366]' : 'bg-info/15 text-info'}`}>{l.channel}</span>
                 <div className="flex-1 min-w-0">

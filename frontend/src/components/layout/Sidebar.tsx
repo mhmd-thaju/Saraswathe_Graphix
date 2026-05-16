@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, ShoppingBag, Kanban,
-  Settings, Printer, ChevronRight
+  Settings, Printer, ChevronRight, Sun, Moon
 } from 'lucide-react'
+import { useTheme } from '@/lib/ThemeContext'
 
 const NAV = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -13,6 +14,8 @@ const NAV = [
 ]
 
 export default function Sidebar() {
+  const { theme, toggleTheme } = useTheme()
+
   return (
     <div className="flex flex-col h-full w-[240px] p-4 gap-2">
       {/* Brand */}
@@ -20,7 +23,7 @@ export default function Sidebar() {
         <div className="w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow">
           <Printer size={20} className="text-white" />
         </div>
-        <div>
+        <div className="flex-1">
           <p className="font-outfit font-700 text-text-primary text-lg leading-tight">PrintFlow</p>
           <p className="text-text-muted text-[11px]">Printing Shop ERP</p>
         </div>
@@ -43,9 +46,26 @@ export default function Sidebar() {
         ))}
       </nav>
 
+      {/* Theme Toggle Button */}
+      <div className="px-3 py-4 border-t border-bg-border/50">
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-2xl border-2 border-text-primary bg-bg-surface hover:bg-bg-elevated transition-all duration-300 shadow-sm group"
+        >
+          {theme === 'dark' ? (
+            <Sun size={20} className="text-yellow-400" />
+          ) : (
+            <Moon size={20} className="text-indigo-500" />
+          )}
+          <span className="font-outfit font-700 text-text-primary tracking-wide">
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </span>
+        </button>
+      </div>
+
       {/* Footer */}
-      <div className="px-2 py-3 border-t border-bg-border">
-        <p className="text-[11px] text-text-faint text-center">
+      <div className="pb-4 text-center">
+        <p className="text-[11px] text-text-faint font-medium">
           Saraswathe Graphix © 2026
         </p>
       </div>
