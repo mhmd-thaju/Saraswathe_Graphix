@@ -21,6 +21,24 @@ export default function Settings() {
   const [vals, setVals] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    settingsApi.getAll().then(list => {
+      const m: Record<string, string> = {}
+      list.forEach(s => { m[s.key] = s.value })
+      setVals(m)
+    }).finally(() => setLoading(false))
+  }, [])
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await settingsApi.bulkUpdate(vals)
+      toast.success('Settings saved!')
+    } catch { toast.error('Save failed') }
+    finally { setSaving(false) }
+  }
+
   const handleExport = () => {
     try {
       const data: Record<string, any> = {};
