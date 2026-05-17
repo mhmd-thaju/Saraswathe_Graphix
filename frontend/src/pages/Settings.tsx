@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Settings as SettingsIcon, Save, Cloud, RefreshCw, CheckCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { settingsApi, backupApi } from '@/lib/api'
+import { settingsApi } from '@/lib/api'
 
 const FIELDS = [
   { key: 'shop_name', label: 'Shop Name', type: 'text', placeholder: 'Saraswathe Graphix' },
@@ -21,39 +21,48 @@ export default function Settings() {
   const [vals, setVals] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [backupStatus, setBackupStatus] = useState<any>(null)
-  const [backing, setBacking] = useState(false)
-
-  useEffect(() => {
-    settingsApi.getAll().then(list => {
-      const m: Record<string, string> = {}
-      list.forEach(s => { m[s.key] = s.value })
-      setVals(m)
-    }).finally(() => setLoading(false))
-
-    backupApi.status().then(setBackupStatus).catch(() => { })
-  }, [])
-
-  async function handleSave() {
-    setSaving(true)
+  const handleExport = () => {
     try {
-      await settingsApi.bulkUpdate(vals)
-      toast.success('Settings saved!')
-    } catch { toast.error('Save failed') }
-    finally { setSaving(false) }
-  }
+      const data: Record<string, any> = {};
+      for (const key of ['printflow_customers', 'printflow_orders', 'printflow_settings', 'printflow_notifications']) {
+        const val = localStorage.getItem(key);
+        if (val) data[key] = JSON.parse(val);
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `printflow_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Data exported successfully!');
+    } catch (e) {
+      toast.error('Failed to export data');
+    }
+  };
 
-  async function triggerBackup() {
-    setBacking(true)
-    try {
-      const result = await backupApi.trigger()
-      setBackupStatus(result)
-      if (result.status === 'success') toast.success('Backup completed!')
-      else if (result.status === 'skipped') toast('Backup skipped — Supabase not configured', { icon: 'ℹ️' })
-      else toast.error(result.reason || 'Backup failed')
-    } catch { toast.error('Backup request failed') }
-    finally { setBacking(false) }
-  }
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        for (const key of ['printflow_customers', 'printflow_orders', 'printflow_settings', 'printflow_notifications']) {
+          if (data[key]) {
+            localStorage.setItem(key, JSON.stringify(data[key]));
+          }
+        }
+        toast.success('Data imported successfully! Reloading...');
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (err) {
+        toast.error('Invalid backup file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  };
 
   if (loading) return (
     <div className="animate-pulse space-y-4">
@@ -120,54 +129,27 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Backup Status */}
+      {/* Local Data Management */}
       <div className="glass-card p-6 mb-5">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h2 className="font-outfit font-700 text-lg flex items-center gap-2">
-              <Cloud size={20} className="text-brand-400" />Cloud Backup
-            </h2>
-            <p className="text-text-muted text-sm mt-1">Daily auto-backup to Supabase at 2:00 AM</p>
+        <h2 className="font-outfit font-700 text-lg mb-5 flex items-center gap-2">
+          <Save size={20} className="text-brand-400" /> Local Data Management
+        </h2>
+        <div className="bg-bg-elevated border border-bg-border rounded-xl p-5 mb-4">
+          <p className="text-sm text-text-muted mb-4">
+            All your PrintFlow data is stored locally in your browser. You can export this data to a JSON file to create a backup, or import a previous backup to restore your data.
+          </p>
+          <div className="flex gap-4">
+            <button onClick={handleExport} className="btn-secondary py-2 px-4 flex-1 justify-center">
+              Export Data (Backup)
+            </button>
+            <label className="btn-secondary py-2 px-4 flex-1 justify-center cursor-pointer text-center">
+              Import Data (Restore)
+              <input type="file" accept=".json" className="hidden" onChange={handleImport} />
+            </label>
           </div>
-          <button onClick={triggerBackup} disabled={backing} className="btn-secondary text-sm py-2 px-4">
-            <RefreshCw size={15} className={backing ? 'animate-spin' : ''} />
-            {backing ? 'Backing up…' : 'Backup Now'}
-          </button>
-        </div>
-
-        {backupStatus && (
-          <div className={`rounded-xl p-4 text-sm ${backupStatus.status === 'success' ? 'bg-success/10 border border-success/30' :
-            backupStatus.status === 'failed' ? 'bg-danger/10 border border-danger/30' :
-              'bg-bg-elevated border border-bg-border'
-            }`}>
-            <div className="flex items-center gap-2 font-medium mb-2">
-              {backupStatus.status === 'success' && <CheckCircle2 size={16} className="text-success" />}
-              Last backup: <span className="capitalize">{backupStatus.status}</span>
-            </div>
-            {backupStatus.synced && (
-              <div className="text-text-muted space-y-1">
-                {Object.entries(backupStatus.synced).map(([k, v]) => (
-                  <div key={k}>✓ {v as number} {k} synced</div>
-                ))}
-              </div>
-            )}
-            {backupStatus.reason && <p className="text-text-muted">{backupStatus.reason}</p>}
-            {backupStatus.completed_at && (
-              <p className="text-text-muted mt-2 text-xs">
-                {new Date(backupStatus.completed_at).toLocaleString('en-IN')}
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className="mt-4 p-4 bg-bg-elevated rounded-xl text-sm text-text-muted">
-          <p className="font-medium text-text-primary mb-1">To enable Supabase backup:</p>
-          <ol className="list-decimal list-inside space-y-1">
-            <li>Create a Supabase project at supabase.com</li>
-            <li>Run <code className="bg-bg-border px-1 rounded text-brand-400">Setup/03_supabase_schema.sql</code> in SQL Editor</li>
-            <li>Add <code className="bg-bg-border px-1 rounded text-brand-400">SUPABASE_URL</code> and <code className="bg-bg-border px-1 rounded text-brand-400">SUPABASE_SERVICE_KEY</code> to <code className="bg-bg-border px-1 rounded text-brand-400">backend/.env</code></li>
-            <li>Restart the backend</li>
-          </ol>
+          <p className="text-xs text-danger mt-3 opacity-80">
+            Warning: Importing data will overwrite your current local data!
+          </p>
         </div>
       </div>
 

@@ -13,6 +13,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@types/pdfmake": "^0.3.2",
+    "@types/uuid": "^10.0.0",
     "axios": "^1.7.2",
     "date-fns": "^3.6.0",
     "jspdf": "^2.5.1",
@@ -23,7 +24,8 @@
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.23.1",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
